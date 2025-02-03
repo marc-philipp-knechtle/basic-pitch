@@ -107,6 +107,7 @@ celerybeat.pid
 # Environments
 .env
 .venv
+.venv-basic-pitch-inference
 env/
 venv/
 ENV/
