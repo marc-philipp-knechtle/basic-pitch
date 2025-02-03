@@ -148,3 +148,6 @@ junit.xml
 
 # intellij
 .idea/
+
+# predictions used for my own testing
+predictions
