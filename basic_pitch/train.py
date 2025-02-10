@@ -30,6 +30,7 @@ from basic_pitch.constants import DATASET_SAMPLING_FREQUENCY
 from basic_pitch.data import tf_example_deserialization
 
 logging.basicConfig(level=logging.INFO)
+logging.getLogger().setLevel(logging.INFO)
 
 
 def main(
@@ -277,7 +278,7 @@ def console_entry_point() -> None:
         args.size_evaluation_callback_datasets,
         datasets_to_use,
         dataset_sampling_frequency,
-        args.dont_sonify,
+        args.no_sonify,
         args.no_contours,
         args.weighted_onset_loss,
         args.positive_onset_weight,
