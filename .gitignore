@@ -155,3 +155,6 @@ predictions
 
 mir_datasets
 bp_datasets_processed
+
+# trained models
+models
