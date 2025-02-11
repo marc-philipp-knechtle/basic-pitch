@@ -168,19 +168,12 @@ class MaestroToTfExample(beam.DoFn):
         return [batch]
 
 
-def create_input_data(source: str) -> List[Tuple[str, str]]:
-    import apache_beam as beam
-
-    filesystem = beam.io.filesystems.FileSystems()
-
+def create_input_data() -> List[Tuple[str, str]]:
+    # the temporary directory handling is required because we also download the metadata which is stored in the data's directory
     with tempfile.TemporaryDirectory() as tmpdir:
-        maestro = mirdata.initialize("maestro", data_home=tmpdir)
-        metadata_path = maestro._index["metadata"]["maestro-v2.0.0"][0]
-        with filesystem.open(
-            os.path.join(source, metadata_path),
-        ) as s, open(os.path.join(tmpdir, metadata_path), "wb") as d:
-            d.write(s.read())
-
+        maestro = mirdata.initialize("maestro", tmpdir)
+        maestro.download(['index'])
+        maestro.download(['metadata'])
         return [(track_id, track.split) for track_id, track in maestro.load_tracks().items()]
 
 
@@ -202,15 +195,15 @@ def main(known_args: argparse.Namespace, pipeline_args: List[str]) -> None:
         "environment_type": "DOCKER",
         "environment_config": known_args.sdk_container_image,
     }
-    input_data = create_input_data(known_args.source)
+    input_data = create_input_data()
     pipeline.run(
-        pipeline_options,
-        pipeline_args,
-        input_data,
-        MaestroToTfExample(known_args.source, download=True),
-        MaestroInvalidTracks(known_args.source),
-        destination,
-        known_args.batch_size,
+        pipeline_options=pipeline_options,
+        pipeline_args=pipeline_args,
+        input_data=input_data,
+        to_tf_example=MaestroToTfExample(known_args.source, download=True),
+        filter_invalid_tracks=MaestroInvalidTracks(known_args.source),
+        destination=destination,
+        batch_size=known_args.batch_size,
     )
 
 
