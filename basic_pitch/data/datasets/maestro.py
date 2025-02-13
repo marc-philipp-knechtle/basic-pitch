@@ -67,6 +67,8 @@ class MaestroInvalidTracks(beam.DoFn):
                 source = getattr(track_remote, attribute)
                 destination = getattr(track_local, attribute)
                 os.makedirs(os.path.dirname(destination), exist_ok=True)
+                # Here, this might fail because the dataset is not downloaded yet
+                # Therefore, I've extracted the files in this folder ehre to fix it
                 with self.filesystem.open(source) as s, open(destination, "wb") as d:
                     for piece in read_in_chunks(s):
                         d.write(piece)
