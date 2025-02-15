@@ -65,7 +65,7 @@ class MedleyDbPitchToTfExample(beam.DoFn):
             N_FREQ_BINS_NOTES,
             N_FREQ_BINS_CONTOURS,
         )
-        from basic_pitch.dataset import tf_example_serialization
+        from basic_pitch.data import tf_example_serialization
 
         logging.info(f"Processing {element}")
         batch = []
@@ -140,6 +140,7 @@ def create_input_data(train_percent: float, seed: Optional[int] = None) -> List[
         random.seed(seed)
 
     medleydb_pitch = mirdata.initialize("medleydb_pitch")
+    medleydb_pitch.download(['index'])
     track_ids = medleydb_pitch.track_ids
     random.shuffle(track_ids)
 
