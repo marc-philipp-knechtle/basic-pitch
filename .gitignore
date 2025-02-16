@@ -154,6 +154,7 @@ junit.xml
 predictions
 # input for predictions
 predictions_input
+predictions_trans-comparing-paper
 
 mir_datasets
 bp_datasets_processed
