@@ -19,6 +19,7 @@ import argparse
 import os
 import pathlib
 import traceback
+from typing import List
 
 from basic_pitch import (
     ICASSP_2022_MODEL_PATH,
@@ -26,6 +27,13 @@ from basic_pitch import (
     build_icassp_2022_model_path,
 )
 from basic_pitch.inference import Model
+
+print("Importing the ML inference library (this may take a few seconds)...")
+from basic_pitch.inference import (
+    predict_and_save,
+    verify_output_dir,
+    verify_input_path,
+)
 
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
@@ -46,8 +54,8 @@ def main() -> None:
         type=str,
         default=ICASSP_2022_MODEL_PATH,
         help="path to the saved model directory. Defaults to a ICASSP 2022 model. "
-        "The preferred model is determined by the first library available in "
-        "[tensorflow, coreml, tensorflow-lite, onnx]",
+             "The preferred model is determined by the first library available in "
+             "[tensorflow, coreml, tensorflow-lite, onnx]",
     )
     parser.add_argument(
         "--model-serialization",
@@ -110,7 +118,7 @@ def main() -> None:
         "--multiple-pitch-bends",
         action="store_true",
         help="Allow overlapping notes in midi file to have pitch bends. Note: this will map each "
-        "pitch to its own instrument",
+             "pitch to its own instrument",
     )
     parser.add_argument(
         "--sonification-samplerate",
@@ -143,27 +151,55 @@ def main() -> None:
     print("✨✨✨✨✨✨✨✨✨")
     print("")
 
-    # tensorflow is very slow to import
-    # this import is here so that the help messages print faster
-    print("Importing the ML inference library (this may take a few seconds)...")
-    from basic_pitch.inference import (
-        predict_and_save,
-        verify_output_dir,
-        verify_input_path,
-    )
 
     output_dir = pathlib.Path(args.output_dir)
     verify_output_dir(output_dir)
 
     audio_path_list = [pathlib.Path(audio_path) for audio_path in args.audio_paths]
+
+    if len(audio_path_list) == 1 and os.path.isdir(audio_path_list[0]):
+        predict_dir(args, audio_path_list[0], output_dir)
+    else:
+        predict_files(args, audio_path_list, output_dir)
+
+
+def duplicate_directory_structure(src: str, dst: str):
+    # Create the destination directory if it doesn't exist
+    if not os.path.exists(dst):
+        os.makedirs(dst)
+
+    # Walk through the source directory
+    for dirpath, dirnames, filenames in os.walk(src):
+        # Construct the destination path
+        structure = os.path.join(dst, os.path.relpath(dirpath, src))
+
+        # Create the directory structure in the destination path
+        if not os.path.exists(structure):
+            os.makedirs(structure)
+
+
+def predict_dir(args, input_dir, output_dir):
+    duplicate_directory_structure(input_dir, output_dir)
+    for root, dirs, files in os.walk(input_dir):
+        for directory in dirs:
+            local_dir_path = os.path.join(root, directory)
+            output_dir_path = os.path.join(output_dir, directory)
+            # Specify the directory you want to list files from
+            directory = pathlib.Path(local_dir_path)
+            # List all files in the directory with their full paths
+            files = [f for f in directory.iterdir() if f.is_file()]
+            # files: List[str] = [f for f in os.listdir(local_dir_path) if os.path.isfile(os.path.join(local_dir_path, f))]
+            predict_files(args, files, output_dir_path)
+
+
+
+def predict_files(args, audio_path_list, output_dir):
     for audio_path in audio_path_list:
         verify_input_path(audio_path)
-
     if args.model_serialization:
         model = Model(build_icassp_2022_model_path(FilenameSuffix[args.model_serialization]))
     else:
         model = Model(args.model_path)
-
     try:
         predict_and_save(
             audio_path_list,
