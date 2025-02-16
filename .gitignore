@@ -152,6 +152,8 @@ junit.xml
 
 # predictions used for my own testing
 predictions
+# input for predictions
+predictions_input
 
 mir_datasets
 bp_datasets_processed
