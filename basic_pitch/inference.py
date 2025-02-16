@@ -524,12 +524,13 @@ def predict_and_save(
         onset_threshold: Minimum energy required for an onset to be considered present.
         frame_threshold: Minimum energy requirement for a frame to be considered present.
         minimum_note_length: The minimum allowed note length in milliseconds.
-        minimum_freq: Minimum allowed output frequency, in Hz. If None, all frequencies are used.
-        maximum_freq: Maximum allowed output frequency, in Hz. If None, all frequencies are used.
+        minimum_frequency: Minimum allowed output frequency, in Hz. If None, all frequencies are used.
+        maximum_frequency: Maximum allowed output frequency, in Hz. If None, all frequencies are used.
         multiple_pitch_bends: If True, allow overlapping notes in midi file to have pitch bends.
         melodia_trick: Use the melodia post-processing step.
         debug_file: An optional path to output debug data to. Useful for testing/verification.
         sonification_samplerate: Sample rate for rendering audio from MIDI.
+        midi_tempo: midi tempo
     """
     for audio_path in audio_path_list:
         print("")
