@@ -30,7 +30,13 @@ from basic_pitch.data import commandline, pipeline
 
 
 class GuitarSetInvalidTracks(beam.DoFn):
+    """
+    This Implementation does not filter out anything, it is just a conversion in the apache beam workflow.
+    """
     def process(self, element: Tuple[str, str], *args: Tuple[Any, Any], **kwargs: Dict[str, Any]) -> Any:
+        """
+        The *args and **kwargs are required for the beam.DoFn interface, but are not used in this function.
+        """
         track_id, split = element
         yield beam.pvalue.TaggedOutput(split, track_id)
 
@@ -126,6 +132,10 @@ class GuitarSetToTfExample(beam.DoFn):
 def create_input_data(
     train_percent: float, validation_percent: float, seed: Optional[int] = None
 ) -> List[Tuple[str, str]]:
+    """
+    test is everything what is not allocated by train_percent and validation_percent
+    :return: Tuple with Track Id + split
+    """
     assert train_percent + validation_percent < 1.0, "Don't over allocate the data!"
 
     # Test percent is 1 - train - validation
