@@ -33,6 +33,7 @@ class GuitarSetInvalidTracks(beam.DoFn):
     """
     This Implementation does not filter out anything, it is just a conversion in the apache beam workflow.
     """
+
     def process(self, element: Tuple[str, str], *args: Tuple[Any, Any], **kwargs: Dict[str, Any]) -> Any:
         """
         The *args and **kwargs are required for the beam.DoFn interface, but are not used in this function.
@@ -93,21 +94,65 @@ class GuitarSetToTfExample(beam.DoFn):
 
                 local_wav_path = f"{track_local.audio_mic_path}_tmp.wav"
 
+                # SOX is used to convert the audio to the correct format
                 tfm = sox.Transformer()
                 tfm.rate(AUDIO_SAMPLE_RATE)
                 tfm.channels(AUDIO_N_CHANNELS)
                 tfm.build(track_local.audio_mic_path, local_wav_path)
 
                 duration = sox.file_info.duration(local_wav_path)
+                """duration in seconds"""
                 time_scale = np.arange(0, duration + ANNOTATION_HOP, ANNOTATION_HOP)
+                """
+                length = n_time_frames
+                shape = (n_time_frames)
+                defines the real time (start) of each frame index
+                """
                 n_time_frames = len(time_scale)
-                note_indices, note_values = track_local.notes_all.to_sparse_index(
+
+                note_indices: np.ndarray
+                """
+                shape = (num_time_note_combis, 2)
+                defines the time index and frequency index for notes 
+                max_value: n_time_frames -> error if it's longer than that... 
+                """
+                note_velocities: np.ndarray
+                """
+                shape = (num_time_note_combis)
+                amplitude (np.ndarray): Array of amplitude values for each index
+                This represents the velocity for each note. 
+                However since some dataset don't over this information, it is empty. 
+                """
+                note_indices, note_velocities = track_local.notes_all.to_sparse_index(
                     time_scale, "s", FREQ_BINS_NOTES, "hz"
                 )
-                onset_indices, onset_values = track_local.notes_all.to_sparse_index(
+
+                onset_indices: np.ndarray
+                """
+                shape = (num_notes, 2)
+                describes each onset with time and frequency index
+                you can also see the onsets by comparing note_indices with onset_indices
+                """
+                onset_velocities: np.ndarray
+                """
+                shape = (num_notes)
+                same as note_velocities, but for onsets
+                """
+                onset_indices, onset_velocities = track_local.notes_all.to_sparse_index(
                     time_scale, "s", FREQ_BINS_NOTES, "hz", onsets_only=True
                 )
-                contour_indices, contour_values = track_local.multif0.to_sparse_index(
+
+                contour_indices: np.ndarray
+                """
+                shape = (num_time_contour_combis, 2)
+                actually almost the same as the other indices
+                describes the time and and frequency for the contours
+                """
+                contour_velocities: np.ndarray
+                """
+                shape = (num_time_contour_combis)
+                """
+                contour_indices, contour_velocities = track_local.multif0.to_sparse_index(
                     time_scale, "s", FREQ_BINS_CONTOURS, "hz"
                 )
 
@@ -117,11 +162,11 @@ class GuitarSetToTfExample(beam.DoFn):
                         "guitarset",
                         local_wav_path,
                         note_indices,
-                        note_values,
+                        note_velocities,
                         onset_indices,
-                        onset_values,
+                        onset_velocities,
                         contour_indices,
-                        contour_values,
+                        contour_velocities,
                         (n_time_frames, N_FREQ_BINS_NOTES),
                         (n_time_frames, N_FREQ_BINS_CONTOURS),
                     )
@@ -130,7 +175,7 @@ class GuitarSetToTfExample(beam.DoFn):
 
 
 def create_input_data(
-    train_percent: float, validation_percent: float, seed: Optional[int] = None
+        train_percent: float, validation_percent: float, seed: Optional[int] = None
 ) -> List[Tuple[str, str]]:
     """
     test is everything what is not allocated by train_percent and validation_percent
