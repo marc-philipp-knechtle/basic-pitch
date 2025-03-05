@@ -16,12 +16,36 @@
 # limitations under the License.
 
 import logging
+import os
+from typing import List
+
+import mido
 import numpy as np
 import pathlib
 import soundfile as sf
 import wave
 
-from mido import MidiFile, MidiTrack, Message
+from mido import MidiFile, MidiTrack, Message, merge_tracks
+
+
+def combine_midi_files(midi_filepaths: List[str], combined_midi_savepath: str) -> str:
+    if not os.path.exists(os.path.dirname(combined_midi_savepath)):
+        os.mkdir(os.path.dirname(combined_midi_savepath))
+
+    combined_midi = MidiFile(type=0)
+    all_tracks = []
+    """
+    pretty_midi (used internally by mirdata) is restricted to type 0 or type 1 MIDI files. 
+    """
+    for midi_path in midi_filepaths:
+        midi_file = MidiFile(midi_path)
+        for track in midi_file.tracks:
+            all_tracks.append(track)
+    merged_track = merge_tracks(
+        all_tracks)  # we need to merge the tracks to get a type 0 midi file (with a single track)
+    combined_midi.tracks.append(merged_track)
+    combined_midi.save(combined_midi_savepath)
+    return combined_midi_savepath
 
 
 def create_mock_wav(output_fpath: pathlib.Path, duration_min: int) -> None:

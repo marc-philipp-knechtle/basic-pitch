@@ -59,6 +59,15 @@ class GuitarSetToTfExample(beam.DoFn):
             self.guitarset_remote.download()
 
     def process(self, element: List[str], *args: Tuple[Any, Any], **kwargs: Dict[str, Any]) -> List[Any]:
+        """
+
+        Args:
+            element: List of track_ids to process in this batch
+            *args: Empty for this case
+            **kwargs: Empty for this case
+
+        Returns: batch with all the data
+        """
         import tempfile
 
         import mirdata

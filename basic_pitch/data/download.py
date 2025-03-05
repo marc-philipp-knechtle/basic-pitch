@@ -23,6 +23,7 @@ from basic_pitch.data.datasets.ikala import main as ikala_main
 from basic_pitch.data.datasets.maestro import main as maestro_main
 from basic_pitch.data.datasets.medleydb_pitch import main as medleydb_pitch_main
 from basic_pitch.data.datasets.slakh import main as slakh_main
+from basic_pitch.data.datasets.csd import main as csd_main
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -33,6 +34,7 @@ DATASET_DICT = {
     "maestro": maestro_main,
     "medleydb_pitch": medleydb_pitch_main,
     "slakh": slakh_main,
+    "csd": csd_main
 }
 
 
