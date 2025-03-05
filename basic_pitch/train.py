@@ -254,14 +254,18 @@ def console_entry_point() -> None:
         for dataset in DATASET_SAMPLING_FREQUENCY.keys()
         if getattr(args, dataset.lower().replace("-", "_"))
     ]
-    dataset_sampling_frequency = np.array(
+    dataset_sampling_frequency: np.ndarray = np.array(
         [
             frequency
             for dataset, frequency in DATASET_SAMPLING_FREQUENCY.items()
             if getattr(args, dataset.lower().replace("-", "_"))
         ]
     )
-    dataset_sampling_frequency = dataset_sampling_frequency / np.sum(dataset_sampling_frequency)
+    """
+    Specifies how the datasets are weighted against each other. The higher the DATASET_SAMPLING_FREQUENCY, the more 
+    important the dataset is for the training process. 
+    """
+    dataset_sampling_frequency: np.ndarray = dataset_sampling_frequency / np.sum(dataset_sampling_frequency)
 
     assert args.steps_per_epoch is not None
     assert args.validation_steps > 0
