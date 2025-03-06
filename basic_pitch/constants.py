@@ -51,6 +51,7 @@ DATASET_SAMPLING_FREQUENCY = {
     "iKala": 2,
     "slakh": 2,
     "csd": 2,
+    "bach10": 2
 }
 
 

@@ -22,10 +22,47 @@ from typing import List
 import mido
 import numpy as np
 import pathlib
+
+import pandas as pd
 import soundfile as sf
 import wave
+import pretty_midi
 
 from mido import MidiFile, MidiTrack, Message, merge_tracks
+
+
+def save_nt_csv_as_midi(csv_filenames: List[str], path: str) -> str:
+    """
+    Saving csv/tsv representation as midi
+    This method does not consider the velocity
+    Args:
+        csv_filenames: csv files to be converted to midi: format: [onset_time, offset_time, pitch]
+        path: path to save the midis to
+    Returns:
+        path where the midis are saved to
+    """
+    if not os.path.exists(path):
+        os.mkdir(path)
+    csv_filename: str
+    for csv_filename in csv_filenames:
+        ann_audio_note: pd.DataFrame = pd.read_csv(csv_filename, sep=';')
+        ann_audio_filepath = os.path.join(path, os.path.basename(csv_filename.replace('.csv', '.mid')))
+        if os.path.exists(ann_audio_filepath):
+            continue
+
+        piano_program = pretty_midi.instrument_name_to_program('Acoustic Grand Piano')
+        piano = pretty_midi.Instrument(program=piano_program)
+
+        for idx, row in ann_audio_note.iterrows():
+            onset: float = row[0]
+            offset: float = row[1]
+            pitch: int = int(row[2])
+            note = pretty_midi.Note(start=onset, end=offset, pitch=pitch, velocity=64)
+            piano.notes.append(note)
+        file: pretty_midi.PrettyMIDI = pretty_midi.PrettyMIDI()
+        file.instruments.append(piano)
+        file.write(ann_audio_filepath)
+    return path
 
 
 def combine_midi_files(midi_filepaths: List[str], combined_midi_savepath: str) -> str:
