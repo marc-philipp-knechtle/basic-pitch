@@ -31,7 +31,7 @@ import pretty_midi
 from mido import MidiFile, MidiTrack, Message, merge_tracks
 
 
-def save_nt_csv_as_midi(csv_filenames: List[str], path: str) -> str:
+def save_nt_csv_realtime_as_midi(csv_filenames: List[str], path: str) -> str:
     """
     Saving csv/tsv representation as midi
     This method does not consider the velocity

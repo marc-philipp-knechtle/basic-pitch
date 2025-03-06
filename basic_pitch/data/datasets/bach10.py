@@ -50,7 +50,7 @@ class Bach10ToTfExample(beam.DoFn):
         if len(ann_audio_note_filepaths_csv) != 10:
             raise RuntimeError(
                 f'Expected exactly 10 annotations for Bach10, found {len(ann_audio_note_filepaths_csv)} files.')
-        utils.save_nt_csv_as_midi(ann_audio_note_filepaths_csv, self.bach10_midi)
+        utils.save_nt_csv_realtime_as_midi(ann_audio_note_filepaths_csv, self.bach10_midi)
 
     def process(self, element: List[str], *args: Tuple[Any, Any], **kwargs: Dict[str, Any]) -> List[Any]:
         import sox
