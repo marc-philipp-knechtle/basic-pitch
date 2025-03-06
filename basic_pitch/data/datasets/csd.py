@@ -220,19 +220,6 @@ def create_input_data(source: str, group: str, split: str) -> List[Tuple[str, st
     return [(os.path.basename(audio_filepath), split) for audio_filepath in audio_filepaths]
 
 
-def to_sparse_index():
-    """
-    This is the main method for making the external dataset working with the other mirdata dependent approach.
-    This method should be similar to mirdata.to_sparse_index(), however it can be different
-
-    -> use mirdata.load_notes_from_midi()
-    -> use mirdata.to_sparse_index()
-
-    -> celebrate
-    """
-    ...
-
-
 def main(known_args: argparse.Namespace, pipeline_args: List[str]) -> None:
     time_created = int(time.time())
     source: str = known_args.source
