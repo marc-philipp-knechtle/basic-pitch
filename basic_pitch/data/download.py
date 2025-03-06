@@ -25,6 +25,7 @@ from basic_pitch.data.datasets.medleydb_pitch import main as medleydb_pitch_main
 from basic_pitch.data.datasets.slakh import main as slakh_main
 from basic_pitch.data.datasets.csd import main as csd_main
 from basic_pitch.data.datasets.bach10 import main as bach10_main
+from basic_pitch.data.datasets.mun import main as mun_main
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -36,7 +37,8 @@ DATASET_DICT = {
     "medleydb_pitch": medleydb_pitch_main,
     "slakh": slakh_main,
     "csd": csd_main,
-    "bach10": bach10_main
+    "bach10": bach10_main,
+    "mun": mun_main
 }
 
 
