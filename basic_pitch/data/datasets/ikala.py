@@ -142,6 +142,7 @@ def create_input_data(train_percent: float, seed: Optional[int] = None) -> List[
         random.seed(seed)
 
     ikala = mirdata.initialize("ikala")
+    ikala.download(['index'])
     track_ids = ikala.track_ids
     random.shuffle(track_ids)
 
