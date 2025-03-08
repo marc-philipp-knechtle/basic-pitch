@@ -142,6 +142,7 @@ class MuNToTfExample(beam.DoFn):
                 # SOX is used to convert the audio to the correct format
                 tfm = sox.Transformer()
                 tfm.rate(AUDIO_SAMPLE_RATE)
+                tfm.set_output_format(bits=16)
                 tfm.channels(AUDIO_N_CHANNELS)
                 tfm.build(tmpaudio, tmpaudio_resampled)
 
