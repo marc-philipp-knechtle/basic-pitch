@@ -172,7 +172,8 @@ def main(known_args: argparse.Namespace, pipeline_args: List[str]) -> None:
     source: str = known_args.source
     destination = commandline.resolve_destination(known_args, time_created)
 
-    input_data_train = create_input_data(source, ['beethoven', 'mahler'], 'train')
+    input_data_train = create_input_data(source, ['beethoven'], 'train')
+    input_data_validation = create_input_data(source, ['mahler'], 'validation')
 
     pipeline_options = {
         "runner": known_args.runner,
@@ -190,7 +191,7 @@ def main(known_args: argparse.Namespace, pipeline_args: List[str]) -> None:
 
     pipeline.run(pipeline_options,
                  pipeline_args,
-                 input_data_train,
+                 input_data_train + input_data_validation,
                  PhAToTfExample(known_args.source),
                  PhAInvalidTracks(),
                  destination,
