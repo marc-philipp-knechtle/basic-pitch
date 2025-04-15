@@ -4,6 +4,7 @@ import os.path
 import shutil
 import tempfile
 import time
+import re
 from glob import glob
 
 from basic_pitch.data import commandline, pipeline
@@ -63,8 +64,16 @@ class PhAToTfExample(beam.DoFn):
 
         for track_id in element:
             basename = os.path.splitext(track_id)[0]
-            local_midi_path = os.path.join(self.phenicx_anechoic_annotations, basename, 'all.mid')
             local_wav_path = os.path.join(self.phenicx_anechoic_mixaudio_wav, basename + '.wav')
+
+            midi_filepaths: List[str] = glob(os.path.join(self.phenicx_anechoic_annotations, basename, '*.mid'))
+            # remove the all.mid file, where all the _o files are included
+            midi_filepaths = [f for f in midi_filepaths if not re.compile(fr".*all.mid").search(f)]
+            # remove all original files (not warped to the actual recording)
+            midi_filepaths = [f for f in midi_filepaths if not re.compile(fr".*_o.mid").search(f)]
+
+            local_midi_path: str = utils.combine_midi_files_ticks_per_beat(midi_filepaths, os.path.join(
+                self.phenicx_anechoic_annotations, basename, 'warped_all.mid'))
 
             notes: mirdata_annotations.NoteData = mirdata_io.load_notes_from_midi(local_midi_path)
             multif0s: mirdata_annotations.MultiF0Data = mirdata_io.load_multif0_from_midi(local_midi_path)
