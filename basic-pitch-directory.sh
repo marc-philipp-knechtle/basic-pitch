@@ -16,7 +16,7 @@ fi
 FILES=$(find "$INPUT_DIR" -type f)
 
 for FILE in $FILES; do
-  basic-pitch "$OUTPUT_DIR" "$FILE" --save-midi --sonify-midi
+  basic-pitch "$OUTPUT_DIR" "$FILE" --save-midi --sonify-midi --save-model-outputs
 done
 
 # basic-pitch "$OUTPUT_DIR" "$FILES" --save-midi --sonify-midi
