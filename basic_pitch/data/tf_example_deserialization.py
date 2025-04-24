@@ -40,12 +40,12 @@ N_SAMPLES_PER_TRACK = 20
 
 
 def prepare_datasets(
-    datasets_base_path: str,
-    training_shuffle_buffer_size: int,
-    batch_size: int,
-    validation_steps: int,
-    datasets_to_use: List[str],
-    dataset_sampling_frequency: np.ndarray,
+        datasets_base_path: str,
+        training_shuffle_buffer_size: int,
+        batch_size: int,
+        validation_steps: int,
+        datasets_to_use: List[str],
+        dataset_sampling_frequency: np.ndarray,
 ) -> Tuple[tf.data.Dataset, tf.data.Dataset]:
     """
     Return a training and a testing dataset.
@@ -67,13 +67,13 @@ def prepare_datasets(
     assert training_shuffle_buffer_size is not None
 
     # init both
-    ds_train = sample_datasets(
+    ds_train: tf.data.Dataset = sample_datasets(
         Split.train,
         datasets_base_path,
         datasets=datasets_to_use,
         dataset_sampling_frequency=dataset_sampling_frequency,
     )
-    ds_validation = sample_datasets(
+    ds_validation: tf.data.Dataset = sample_datasets(
         Split.validation,
         datasets_base_path,
         datasets=datasets_to_use,
@@ -109,11 +109,11 @@ def prepare_datasets(
 
 
 def prepare_visualization_datasets(
-    datasets_base_path: str,
-    batch_size: int,
-    validation_steps: int,
-    datasets_to_use: List[str],
-    dataset_sampling_frequency: np.ndarray,
+        datasets_base_path: str,
+        batch_size: int,
+        validation_steps: int,
+        datasets_to_use: List[str],
+        dataset_sampling_frequency: np.ndarray,
 ) -> Tuple[tf.data.Dataset, tf.data.Dataset]:
     """
     Return a training and a testing dataset for visualization
@@ -169,13 +169,13 @@ def prepare_visualization_datasets(
 
 
 def sample_datasets(
-    split: Split,
-    datasets_base_path: str,
-    datasets: List[str],
-    dataset_sampling_frequency: np.ndarray,
-    n_shuffle: int = 1000,
-    n_samples_per_track: int = N_SAMPLES_PER_TRACK,
-    pairs: bool = False,
+        split: Split,
+        datasets_base_path: str,
+        datasets: List[str],
+        dataset_sampling_frequency: np.ndarray,
+        n_shuffle: int = 1000,
+        n_samples_per_track: int = N_SAMPLES_PER_TRACK,
+        pairs: bool = False,
 ) -> tf.data.Dataset:
     """samples tfrecord data to create a dataset
 
@@ -239,10 +239,10 @@ def sample_datasets(
 
 
 def transcription_file_generator(
-    split: Split,
-    dataset_names: List[str],
-    datasets_base_path: str,
-    sample_weights: np.ndarray,
+        split: Split,
+        dataset_names: List[str],
+        datasets_base_path: str,
+        sample_weights: np.ndarray,
 ) -> Tuple[Callable[[], Iterator[tf.Tensor]], bool]:
     """Reads underlying files and returns file generator
 
@@ -267,16 +267,16 @@ def transcription_file_generator(
 
 def _train_file_generator(x: Dict[str, tf.data.Dataset], weights: np.ndarray) -> Iterator[tf.Tensor]:
     """file generator for training sets"""
-    x = {k: list(v) for (k, v) in x.items()} # converts the dt.data.Dataset into a list
+    x = {k: list(v) for (k, v) in x.items()}  # converts the dt.data.Dataset into a list
     keys = list(x.keys())
     # shuffle each list
     for k in keys:
-        np.random.shuffle(x[k]) # shuffles each list created from tf.data.Dataset
+        np.random.shuffle(x[k])  # shuffles each list created from tf.data.Dataset
 
-    while all(x.values()): # in x, the values are lists -> all(x.values()) checks if the lists are empty
+    while all(x.values()):  # in x, the values are lists -> all(x.values()) checks if the lists are empty
         # choose a random dataset and yield the last file
-        fpath = x[np.random.choice(keys, p=weights)].pop() # chooses from dataset with probability given by the weights
-        yield fpath # returns the list created by the dataset
+        fpath = x[np.random.choice(keys, p=weights)].pop()  # chooses from dataset with probability given by the weights
+        yield fpath  # returns the list created by the dataset
 
 
 def _validation_file_generator(x: Dict[str, tf.data.Dataset]) -> Iterator[tf.Tensor]:
@@ -294,7 +294,7 @@ def _validation_file_generator(x: Dict[str, tf.data.Dataset]) -> Iterator[tf.Ten
 
 
 def combine_transcription_examples(
-    a: tf.Tensor, target: Dict[str, tf.Tensor], w: Dict[str, tf.Tensor]
+        a: tf.Tensor, target: Dict[str, tf.Tensor], w: Dict[str, tf.Tensor]
 ) -> Tuple[tf.Tensor, Dict[str, tf.Tensor], Dict[str, tf.Tensor]]:
     """mix pairs together for paired dataset
 
@@ -322,7 +322,7 @@ def combine_transcription_examples(
 
 
 def transcription_dataset(
-    file_generator: Callable[[], Iterator[str]], n_samples_per_track: int, random_seed: bool
+        file_generator: Callable[[], Iterator[str]], n_samples_per_track: int, random_seed: bool
 ) -> tf.data.Dataset:
     """
     `fpaths_in` is a list of .tfrecords files
@@ -337,7 +337,8 @@ def transcription_dataset(
     ds = ds.map(parse_transcription_tfexample, num_parallel_calls=tf.data.AUTOTUNE)
     ds = ds.filter(is_not_bad_shape)
     ds = ds.map(
-        lambda file_id, source, audio_wav, notes_indices, notes_values, onsets_indices, onsets_values, contours_indices, contours_values, notes_onsets_shape, contours_shape: (  # noqa: E501
+        lambda file_id, source, audio_wav, notes_indices, notes_values, onsets_indices, onsets_values, contours_indices,
+               contours_values, notes_onsets_shape, contours_shape: (  # noqa: E501
             file_id,
             source,
             tf.audio.decode_wav(
@@ -366,7 +367,7 @@ def transcription_dataset(
 
 
 def parse_transcription_tfexample(
-    serialized_example: tf.train.Example,
+        serialized_example: tf.train.Example,
 ) -> Tuple[
     tf.Tensor,
     tf.Tensor,
@@ -429,17 +430,17 @@ def parse_transcription_tfexample(
 
 
 def is_not_bad_shape(
-    _file_id: tf.Tensor,
-    _source: tf.Tensor,
-    _audio_wav: tf.Tensor,
-    _notes_indices: tf.Tensor,
-    notes_values: tf.Tensor,
-    _onsets_indices: tf.Tensor,
-    _onsets_values: tf.Tensor,
-    _contours_indices: tf.Tensor,
-    _contours_values: tf.Tensor,
-    notes_onsets_shape: tf.Tensor,
-    _contours_shape: tf.Tensor,
+        _file_id: tf.Tensor,
+        _source: tf.Tensor,
+        _audio_wav: tf.Tensor,
+        _notes_indices: tf.Tensor,
+        notes_values: tf.Tensor,
+        _onsets_indices: tf.Tensor,
+        _onsets_values: tf.Tensor,
+        _contours_indices: tf.Tensor,
+        _contours_values: tf.Tensor,
+        notes_onsets_shape: tf.Tensor,
+        _contours_shape: tf.Tensor,
 ) -> tf.Tensor:
     """checks for improper datashape for note values and onsets"""
     bad_shape = tf.logical_and(
@@ -461,12 +462,12 @@ def sparse2dense(values: tf.Tensor, indices: tf.Tensor, dense_shape: tf.Tensor) 
 
 
 def reduce_transcription_inputs(
-    file_id: str,
-    src: str,
-    wav: Tuple[tf.Tensor, int],
-    notes: tf.Tensor,
-    onsets: tf.Tensor,
-    contour: tf.Tensor,
+        file_id: str,
+        src: str,
+        wav: Tuple[tf.Tensor, int],
+        notes: tf.Tensor,
+        onsets: tf.Tensor,
+        contour: tf.Tensor,
 ) -> Tuple[tf.Tensor, tf.Tensor, tf.Tensor, tf.Tensor, Dict[str, str]]:
     """Map tf records data to a tuple
     If audio is stereo, it is mixed down to mono.
@@ -520,7 +521,7 @@ def _infer_time_size(onsets: tf.Tensor, contour: tf.Tensor, notes: tf.Tensor) ->
 
 
 def get_sample_weights(
-    audio: tf.Tensor, onsets: np.ndarray, contour: np.ndarray, notes: np.ndarray, metadata: Dict[Any, Any]
+        audio: tf.Tensor, onsets: np.ndarray, contour: np.ndarray, notes: np.ndarray, metadata: Dict[Any, Any]
 ) -> Tuple[tf.Tensor, np.ndarray, np.ndarray, np.ndarray, tf.cond, tf.cond, tf.cond, Dict[Any, Any]]:
     """Add sample weights based on whether or not the target is empty
     If it's empty, the weight is 0, otherwise it's 1. Empty targets get filled
@@ -608,7 +609,7 @@ def trim_time(data: np.ndarray, start: int, duration: int, sr: int) -> tf.Tensor
 
 
 def extract_window(
-    audio: tf.Tensor, onsets: np.ndarray, contour: np.ndarray, notes: np.ndarray, t_start: int
+        audio: tf.Tensor, onsets: np.ndarray, contour: np.ndarray, notes: np.ndarray, t_start: int
 ) -> Tuple[tf.Tensor, tf.Tensor, tf.Tensor, tf.Tensor]:
     """extracts a window of data from the given audio and its associated metadata
 
@@ -635,7 +636,7 @@ def extract_window(
 
 
 def extract_random_window(
-    audio: tf.Tensor, onsets: np.ndarray, contour: np.ndarray, notes: np.ndarray, seed: Optional[int]
+        audio: tf.Tensor, onsets: np.ndarray, contour: np.ndarray, notes: np.ndarray, seed: Optional[int]
 ) -> Tuple[tf.Tensor, tf.Tensor, tf.Tensor, tf.Tensor]:
     """Trim transcription data to a fixed length of time
     starting from a random time index.
@@ -665,15 +666,15 @@ def extract_random_window(
 
 
 def get_transcription_chunks(
-    audio: tf.Tensor,
-    onsets: np.ndarray,
-    contour: np.ndarray,
-    notes: np.ndarray,
-    onset_weight: int,
-    contour_weight: int,
-    note_weight: int,
-    n_samples_per_track: int,
-    seed: bool,
+        audio: tf.Tensor,
+        onsets: np.ndarray,
+        contour: np.ndarray,
+        notes: np.ndarray,
+        onset_weight: int,
+        contour_weight: int,
+        note_weight: int,
+        n_samples_per_track: int,
+        seed: bool,
 ) -> tf.data.Dataset:
     """Randomly sample fixed-length time chunks for transcription data
     Args:
@@ -715,13 +716,13 @@ def get_transcription_chunks(
 
 
 def is_not_all_silent_annotations(
-    audio: tf.Tensor,
-    onsets: np.ndarray,
-    contour: np.ndarray,
-    notes: np.ndarray,
-    onset_weight: int,
-    contour_weight: int,
-    note_weight: int,
+        audio: tf.Tensor,
+        onsets: np.ndarray,
+        contour: np.ndarray,
+        notes: np.ndarray,
+        onset_weight: int,
+        contour_weight: int,
+        note_weight: int,
 ) -> tf.Tensor:
     """returns a boolean value indicating whether the notes and pitch contour are or are not all zero, or silent."""
     contours_nonsilent = tf.math.reduce_mean(contour) != 0
@@ -730,13 +731,13 @@ def is_not_all_silent_annotations(
 
 
 def to_transcription_training_input(
-    audio: tf.Tensor,
-    onsets: np.ndarray,
-    contour: np.ndarray,
-    notes: np.ndarray,
-    onset_weight: int,
-    contour_weight: int,
-    note_weight: int,
+        audio: tf.Tensor,
+        onsets: np.ndarray,
+        contour: np.ndarray,
+        notes: np.ndarray,
+        onset_weight: int,
+        contour_weight: int,
+        note_weight: int,
 ) -> Tuple[tf.Tensor, Dict[str, tf.Tensor], Dict[str, int]]:
     """convert transcription data to the format expected by the model"""
     return (
