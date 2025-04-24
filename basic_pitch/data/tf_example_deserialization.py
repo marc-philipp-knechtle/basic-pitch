@@ -267,16 +267,16 @@ def transcription_file_generator(
 
 def _train_file_generator(x: Dict[str, tf.data.Dataset], weights: np.ndarray) -> Iterator[tf.Tensor]:
     """file generator for training sets"""
-    x = {k: list(v) for (k, v) in x.items()}
+    x = {k: list(v) for (k, v) in x.items()} # converts the dt.data.Dataset into a list
     keys = list(x.keys())
     # shuffle each list
     for k in keys:
-        np.random.shuffle(x[k])
+        np.random.shuffle(x[k]) # shuffles each list created from tf.data.Dataset
 
-    while all(x.values()):
+    while all(x.values()): # in x, the values are lists -> all(x.values()) checks if the lists are empty
         # choose a random dataset and yield the last file
-        fpath = x[np.random.choice(keys, p=weights)].pop()
-        yield fpath
+        fpath = x[np.random.choice(keys, p=weights)].pop() # chooses from dataset with probability given by the weights
+        yield fpath # returns the list created by the dataset
 
 
 def _validation_file_generator(x: Dict[str, tf.data.Dataset]) -> Iterator[tf.Tensor]:
