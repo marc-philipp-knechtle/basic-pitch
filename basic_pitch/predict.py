@@ -191,6 +191,10 @@ def predict_dir(args, input_dir, output_dir):
             # files: List[str] = [f for f in os.listdir(local_dir_path) if os.path.isfile(os.path.join(local_dir_path, f))]
             predict_files(args, files, output_dir_path)
 
+        if len(files) > 0:
+            filepaths = [os.path.join(input_dir, file) for file in files]
+            predict_files(args, filepaths, output_dir)
+
 
 
 def predict_files(args, audio_path_list, output_dir):
