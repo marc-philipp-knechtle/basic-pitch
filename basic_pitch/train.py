@@ -264,6 +264,8 @@ def console_entry_point() -> None:
     """
     Specifies how the datasets are weighted against each other. The higher the DATASET_SAMPLING_FREQUENCY, the more 
     important the dataset is for the training process. 
+    
+    # Todo assert that each dataset is not weighted bigger than 1% 
     """
     dataset_sampling_frequency: np.ndarray = dataset_sampling_frequency / np.sum(dataset_sampling_frequency)
 
