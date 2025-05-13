@@ -181,20 +181,9 @@ def duplicate_directory_structure(src: str, dst: str):
 def predict_dir(args, input_dir, output_dir):
     duplicate_directory_structure(input_dir, output_dir)
     for root, dirs, files in os.walk(input_dir):
-        for directory in dirs:
-            local_dir_path = os.path.join(root, directory)
-            output_dir_path = os.path.join(output_dir, directory)
-            # Specify the directory you want to list files from
-            directory = pathlib.Path(local_dir_path)
-            # List all files in the directory with their full paths
-            files = [f for f in directory.iterdir() if f.is_file()]
-            # files: List[str] = [f for f in os.listdir(local_dir_path) if os.path.isfile(os.path.join(local_dir_path, f))]
-            predict_files(args, files, output_dir_path)
-
-        if len(files) > 0:
-            filepaths = [os.path.join(input_dir, file) for file in files]
-            predict_files(args, filepaths, output_dir)
-
+        output_dir_path = os.path.join(output_dir, str(os.path.relpath(root, input_dir)))
+        filepaths= [os.path.join(root, file) for file in files]
+        predict_files(args, filepaths, output_dir_path)
 
 
 def predict_files(args, audio_path_list, output_dir):
