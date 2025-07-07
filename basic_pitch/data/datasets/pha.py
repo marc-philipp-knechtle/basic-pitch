@@ -148,7 +148,7 @@ class PhAToTfExample(beam.DoFn):
                 batch.append(
                     tf_example_serialization.to_transcription_tfexample(
                         track_id,
-                        "csd",
+                        "pha",
                         tmpaudio_resampled,
                         note_indices,
                         note_velocities,
@@ -186,7 +186,7 @@ def main(known_args: argparse.Namespace, pipeline_args: List[str]) -> None:
 
     pipeline_options = {
         "runner": known_args.runner,
-        "job_name": f"csd-tfrecords-{time_created}",
+        "job_name": f"pha-tfrecords-{time_created}",
         "machine_type": "e2-standard-4",
         "num_workers": 25,
         "disk_size_gb": 128,
