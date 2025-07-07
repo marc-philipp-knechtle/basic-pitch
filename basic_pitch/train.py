@@ -89,6 +89,7 @@ def main(
 
     # model
     model = models.model(no_contours=no_contours)
+    model.summary()
     input_shape = list(model.input_shape)
     if input_shape[0] is None:
         input_shape[0] = batch_size
@@ -275,8 +276,8 @@ def console_entry_point() -> None:
     main(
         args.source,
         args.output,
-        args.training_shuffle_size,
         args.batch_size,
+        args.training_shuffle_size,
         args.learning_rate,
         args.epochs,
         args.steps_per_epoch,
