@@ -7,6 +7,10 @@ import time
 import re
 from glob import glob
 
+import mido
+import numpy as np
+import pretty_midi
+
 from basic_pitch.data import commandline, pipeline
 from typing import Any, List, Dict, Tuple, Optional
 
@@ -52,6 +56,89 @@ class RwcToTfExample(beam.DoFn):
     def available_groups(cls):
         return ['rwc', 'non-piano', 'non-piano-train', 'non-piano-validation', 'non-piano-test']
 
+    def parse_midi(self, path: str, global_key_offset: int = 0) -> np.ndarray:
+        """
+        open midi file and return np.array() of (onset, offset, note, velocity) rows
+        Args:
+            path: path to midi file
+            global_key_offset: sometimes
+        Returns: np.ndarray() with (onset, offset, note, velocity) for each note
+        """
+
+        midi = mido.MidiFile(path)
+
+        if len(midi.tracks) > 2:
+            logging.warning('Multiple midi tracks detected. Found Tracks:')
+            for track in midi.tracks:
+                logging.warning(track.name)
+            logging.warning('The Processing of these files handles all tracks as part of the piano part.\n'
+                            'There is no differentiation.')
+
+        time = 0
+        sustain = False
+        events = []
+        for message in midi:
+            time += message.time
+
+            # This was used to skip the vocal annotations for a pure piano training
+            # channel: int = getattr(message, 'channel', 0)
+            # if channel == 1:
+            #     continue
+
+            if message.type == 'control_change' and message.control == 64 and (message.value >= 64) != sustain:
+                # sustain pedal state has just changed
+                sustain = message.value >= 64
+                event_type = 'sustain_on' if sustain else 'sustain_off'
+                event = dict(index=len(events), time=time, type=event_type, note=None, velocity=0)
+                events.append(event)
+
+            if 'note' in message.type:
+                # MIDI offsets can be either 'note_off' events or 'note_on' with zero velocity
+                velocity = message.velocity if message.type == 'note_on' else 0
+                event = dict(index=len(events), time=time, type='note', note=message.note + global_key_offset,
+                             velocity=velocity,
+                             sustain=sustain)
+                events.append(event)
+
+        notes: List[Tuple] = []
+        for i, onset in enumerate(events):
+            if onset['velocity'] == 0:
+                continue
+
+            # find the next note_off message
+            offset = next(n for n in events[i + 1:] if n['note'] == onset['note'] or n is events[-1])
+
+            if offset['sustain'] and offset is not events[-1]:
+                # if the sustain pedal is active at offset, find when the sustain ends
+                offset = next(n for n in events[offset['index'] + 1:]
+                              if n['type'] == 'sustain_off' or n['note'] == onset['note'] or n is events[-1])
+
+            note: Tuple = (onset['time'], offset['time'], onset['note'], onset['velocity'])
+            notes.append(note)
+
+        return np.array(notes)
+
+    def save_rwc_arr_as_midi(self, arr: np.ndarray, savepath: str) -> str:
+        piano_program = pretty_midi.instrument_name_to_program('Acoustic Grand Piano')
+        piano = pretty_midi.Instrument(program=piano_program)
+
+        for onset, offset, pitch, velocity in arr:
+            note = pretty_midi.Note(start=onset, end=offset, pitch=int(pitch), velocity=64)
+            piano.notes.append(note)
+        file: pretty_midi.PrettyMIDI = pretty_midi.PrettyMIDI()
+        file.instruments.append(piano)
+        file.write(savepath)
+
+        return str(savepath)
+
+
+    def setup(self):
+        logging.info('Setting up RWC data - SKIPPING because it is already downloaded.')
+        # midi_files: List[str] = glob(os.path.join(self.rwc_midi_warped, f'*.mid'))
+        # for file in midi_files:
+        #     ann = self.parse_midi(file)
+        #     self.save_rwc_arr_as_midi(ann, file + '_new.mid')
+
     def process(self, element: List[str], *args: Tuple[Any, Any], **kwargs: Dict[str, Any]) -> List[Any]:
         import sox
         import numpy as np
@@ -73,8 +160,16 @@ class RwcToTfExample(beam.DoFn):
         for track_id in element:
             basename = os.path.splitext(track_id)[0]
 
-            local_midi_path = os.path.join(self.rwc_midi_warped, basename + '_warped.mid')
+            local_midi_path = os.path.join(self.rwc_midi_warped, basename + '_warped.mid_new.mid')
             wav_path = os.path.join(self.rwc_wav, basename + '.wav')
+
+            # notes: mirdata_annotations.NoteData = mirdata_io.load_notes_from_midi(local_midi_path)
+            # multif0s: mirdata_annotations.MultiF0Data = mirdata_io.load_multif0_from_midi(local_midi_path)
+
+            # First approach trying to create a type 0 midi file with cutils.combine_midi_files
+            # -> did not work, still timeout at load_multif0_from_midi
+            # f0_midipath = os.path.join(local_midi_path + '.f0.mid')
+            # utils.combine_midi_files([local_midi_path], f0_midipath)
 
             notes: mirdata_annotations.NoteData = mirdata_io.load_notes_from_midi(local_midi_path)
             multif0s: mirdata_annotations.MultiF0Data = mirdata_io.load_multif0_from_midi(local_midi_path)
@@ -200,7 +295,7 @@ def main(known_args: argparse.Namespace, pipeline_args: List[str]) -> None:
 
     pipeline_options = {
         "runner": known_args.runner,
-        "job_name": f"pha-tfrecords-{time_created}",
+        "job_name": f"rwc-tfrecords-{time_created}",
         "machine_type": "e2-standard-4",
         "num_workers": 25,
         "disk_size_gb": 128,
