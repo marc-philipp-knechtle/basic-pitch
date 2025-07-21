@@ -45,6 +45,19 @@ test_set_files: Dict = {
                         '2104', '2105', '2106']
 }
 
+non_piano_files = ['2219', '2288', '2294', '2241', '2186', '2296', '2204', '2203', '2191', '2289', '2217', '2298',
+                   '2220', '2295', '2297', '2659', '2244', '2222', '2242', '2218', '2202', '2293', '2221', '2243',
+                   '2156', '2131', '2117', '2140', '2154', '2147', '2155', '2119', '2127', '2116', '2138', '2118',
+                   '2157', '2105', '2106', '2104', '2179', '2177', '2180', '2178', '2376', '2483', '2415', '2433',
+                   '2560', '2504', '2497', '2507', '2506', '2562', '2377', '2494', '2481', '2314', '2432', '2403',
+                   '2383', '2313', '2315', '2417', '2365', '2480', '2431', '2368', '2482', '2381', '2382', '2379',
+                   '2505', '2622', '2621', '2384', '2366', '2451', '2416', '1918', '1922', '1919', '1933', '1931',
+                   '1932', '1916', '1923', '1742', '2081', '2079', '2078', '2075', '2080', '2083', '2077', '2082',
+                   '2076', '1790', '1788', '1812', '1805', '1807', '1859', '1789', '1824', '1793', '1819', '1811',
+                   '1835', '1792', '1822', '1791', '1818', '1813', '1817']
+
+non_piano_validation_files = list(set(non_piano_files) & set(validation_set_files))
+non_piano_train_files = list(set(non_piano_files) - set(non_piano_validation_files))
 
 class MuNInvalidTracks(beam.DoFn):
     """
@@ -205,7 +218,7 @@ class MuNToTfExample(beam.DoFn):
                 batch.append(
                     tf_example_serialization.to_transcription_tfexample(
                         track_id,
-                        "csd",
+                        "mun",
                         tmpaudio_resampled,
                         note_indices,
                         note_velocities,
@@ -242,6 +255,14 @@ def create_input_data(source: str, group: str, split: str) -> List[Tuple[str, st
         for filepath in all_audio_filepaths:
             if any(validation_label in filepath for validation_label in validation_set_files):
                 audio_filepaths_filtered.append(filepath)
+    elif 'non-piano-tr' in group:
+        for filepath in all_audio_filepaths:
+            if any(train_label in filepath for train_label in non_piano_train_files):
+                audio_filepaths_filtered.append(filepath)
+    elif 'non-piano-val' in group:
+        for filepath in all_audio_filepaths:
+            if any(val_label in filepath for val_label in non_piano_validation_files):
+                audio_filepaths_filtered.append(filepath)
     else:
         raise ValueError(f'Specified unknown group for this dataset. Specified: {group}')
 
@@ -257,12 +278,13 @@ def main(known_args: argparse.Namespace, pipeline_args: List[str]):
     source: str = known_args.source
     destination = commandline.resolve_destination(known_args, time_created)
 
-    input_data_train = create_input_data(source, 'MuN-10-var-train', 'train')
-    input_data_validation = create_input_data(source, 'MuN-validation', 'validation')
+    input_data_train = create_input_data(source, 'non-piano-tr', 'train')
+    input_data_train = input_data_train[:2]
+    input_data_validation = create_input_data(source, 'non-piano-val', 'validation')
 
     pipeline_options = {
         "runner": known_args.runner,
-        "job_name": f"csd-tfrecords-{time_created}",
+        "job_name": f"mun-tfrecords-{time_created}",
         "machine_type": "e2-standard-4",
         "num_workers": 25,
         "disk_size_gb": 128,
