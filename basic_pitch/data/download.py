@@ -28,6 +28,7 @@ from basic_pitch.data.datasets.bach10 import main as bach10_main
 from basic_pitch.data.datasets.mun import main as mun_main
 from basic_pitch.data.datasets.pha import main as pha_main
 from basic_pitch.data.datasets.swd import main as swd_main
+from basic_pitch.data.datasets.rwc import main as rwc_main
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -42,7 +43,8 @@ DATASET_DICT = {
     "bach10": bach10_main,
     "mun": mun_main,
     "pha": pha_main,
-    "swd": swd_main
+    "swd": swd_main,
+    "rwc": rwc_main
 }
 
 
